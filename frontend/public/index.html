@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ParkPro — Sistema de Estacionamento</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🅿️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#07090d; --surface:#0f1117; --surface2:#161a23; --surface3:#1c2130;
+  --border:#1e2535; --border2:#252d3d;
+  --accent:#f0b429; --accent-dark:#c9921a; --accent-glow:rgba(240,180,41,0.18);
+  --green:#1fcc90; --red:#ff4455; --blue:#4f8ef7; --purple:#a78bfa;
+  --text:#dde4f0; --text2:#8895ab; --text3:#4a556a;
+  --shadow:0 8px 40px rgba(0,0,0,0.6);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow:hidden;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+
+/* ── LOGIN PAGE ── */
+#login-page{
+  position:fixed;inset:0;z-index:1000;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  background-image:
+    radial-gradient(ellipse 60% 50% at 50% -10%, rgba(240,180,41,0.12) 0%, transparent 70%),
+    repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(255,255,255,0.015) 60px, rgba(255,255,255,0.015) 61px),
+    repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,0.015) 60px, rgba(255,255,255,0.015) 61px);
+}
+.login-box{
+  width:100%;max-width:400px;padding:2.5rem;
+  background:var(--surface);border:1px solid var(--border);border-radius:24px;
+  box-shadow:var(--shadow);
+  animation:fadeUp .4s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.login-logo{text-align:center;margin-bottom:2rem;}
+.login-logo .ico{
+  width:72px;height:72px;margin:0 auto 1rem;
+  background:linear-gradient(135deg,var(--accent),#e07c10);
+  border-radius:18px;display:flex;align-items:center;justify-content:center;
+  font-size:2rem;box-shadow:0 8px 30px rgba(240,180,41,0.35);
+}
+.login-logo h1{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;letter-spacing:-1px;}
+.login-logo h1 span{color:var(--accent);}
+.login-logo p{color:var(--text2);font-size:0.85rem;margin-top:4px;}
+.login-err{
+  background:rgba(255,68,85,0.1);border:1px solid rgba(255,68,85,0.25);
+  color:var(--red);border-radius:10px;padding:.75rem 1rem;font-size:.85rem;
+  margin-bottom:1rem;display:none;
+}
+
+/* ── LAYOUT PRINCIPAL ── */
+#app{display:none;height:100vh;display:none;flex-direction:column;}
+#app.visible{display:flex;}
+
+header{
+  height:60px;flex-shrink:0;
+  background:rgba(7,9,13,0.95);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;
+  position:relative;z-index:50;
+}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.5px;}
+.logo-box{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#e07c10);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;}
+.logo span{color:var(--accent);}
+.header-center{display:flex;gap:2px;}
+.nav-btn{
+  background:transparent;border:none;color:var(--text2);
+  padding:.4rem .9rem;border-radius:8px;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;
+  display:flex;align-items:center;gap:6px;transition:all .15s;
+}
+.nav-btn:hover{background:var(--surface2);color:var(--text);}
+.nav-btn.active{background:var(--accent-glow);color:var(--accent);font-weight:600;}
+.header-right{display:flex;align-items:center;gap:.75rem;}
+.live-pill{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(31,204,144,0.08);border:1px solid rgba(31,204,144,0.2);
+  padding:3px 10px;border-radius:20px;font-size:.72rem;color:var(--green);
+}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 1.4s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+#clock{font-family:'Syne',sans-serif;font-size:.82rem;color:var(--text2);}
+.user-pill{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface2);border:1px solid var(--border);
+  padding:4px 12px 4px 4px;border-radius:20px;cursor:pointer;
+  font-size:.8rem;transition:border-color .15s;
+}
+.user-pill:hover{border-color:var(--border2);}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-dark));display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:#000;}
+
+.content-area{flex:1;overflow:hidden;display:flex;}
+.page{display:none;width:100%;height:100%;overflow-y:auto;padding:1.5rem;}
+.page.active{display:block;}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;}
+.stat{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:1.25rem;position:relative;overflow:hidden;cursor:default;
+  transition:transform .2s,border-color .2s;
+}
+.stat:hover{transform:translateY(-2px);border-color:var(--border2);}
+.stat::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--accent));border-radius:2px 2px 0 0;}
+.stat-label{font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:.4rem;}
+.stat-val{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;line-height:1;letter-spacing:-.5px;}
+.stat-sub{font-size:.72rem;color:var(--text3);margin-top:.3rem;}
+.stat-ico{position:absolute;right:1.1rem;top:1.1rem;font-size:1.4rem;opacity:.25;}
+
+/* ── GRID ── */
+.main-grid{display:grid;grid-template-columns:380px 1fr;gap:1.25rem;}
+.side-stack{display:flex;flex-direction:column;gap:1.25rem;}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;}
+.card-head{
+  padding:1rem 1.25rem;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;display:flex;align-items:center;gap:7px;}
+.card-body{padding:1.25rem;}
+
+/* ── FORM ── */
+.fg{margin-bottom:.9rem;}
+label{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:.4rem;}
+input,select,textarea{
+  width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:.7rem .9rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.88rem;
+  transition:border-color .2s,box-shadow .2s;outline:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+input::placeholder,textarea::placeholder{color:var(--text3);}
+select option{background:var(--surface2);}
+.plate{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:3px;text-align:center;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+
+.btn{
+  width:100%;padding:.75rem;border:none;border-radius:11px;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;
+  cursor:pointer;transition:all .2s;letter-spacing:.3px;
+}
+.btn-acc{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#000;}
+.btn-acc:hover{box-shadow:0 6px 20px rgba(240,180,41,.35);transform:translateY(-1px);}
+.btn-danger{background:linear-gradient(135deg,var(--red),#cc1122);color:#fff;}
+.btn-danger:hover{box-shadow:0 6px 20px rgba(255,68,85,.3);}
+.btn-ghost{background:var(--surface2);border:1px solid var(--border);color:var(--text);}
+.btn-ghost:hover{border-color:var(--border2);}
+.btn-sm{width:auto;padding:.35rem .8rem;font-size:.75rem;border-radius:7px;}
+.btn-green{background:linear-gradient(135deg,var(--green),#17a876);color:#000;}
+.btn-green:hover{box-shadow:0 6px 20px rgba(31,204,144,.3);}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:3px;background:var(--surface2);border-radius:10px;padding:3px;}
+.tab{flex:1;padding:.45rem;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:.82rem;border-radius:7px;cursor:pointer;transition:all .15s;}
+.tab.active{background:var(--surface);color:var(--text);font-weight:500;}
+
+/* ── PREVIEW BOX ── */
+.preview-box{
+  background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:1rem;
+  margin-bottom:.9rem;font-size:.85rem;min-height:80px;
+  display:flex;align-items:center;justify-content:center;
+}
+.preview-box.loaded{display:block;}
+.prev-row{display:flex;justify-content:space-between;padding:.3rem 0;font-size:.83rem;}
+.prev-row .lbl{color:var(--text2);}
+.prev-total .val{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:var(--accent);}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:.82rem;}
+thead th{
+  padding:.65rem .9rem;text-align:left;
+  font-size:.67rem;text-transform:uppercase;letter-spacing:1px;color:var(--text3);
+  border-bottom:1px solid var(--border);font-weight:500;white-space:nowrap;
+}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--surface2);}
+td{padding:.7rem .9rem;vertical-align:middle;}
+
+.plate-badge{
+  font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;
+  background:var(--surface2);border:1px solid var(--border);
+  padding:2px 9px;border-radius:5px;letter-spacing:2px;white-space:nowrap;
+}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:.7rem;font-weight:600;white-space:nowrap;}
+.b-green{background:rgba(31,204,144,.1);color:var(--green);border:1px solid rgba(31,204,144,.2);}
+.b-gray{background:rgba(72,85,106,.15);color:var(--text3);border:1px solid var(--border);}
+.b-yellow{background:rgba(240,180,41,.1);color:var(--accent);border:1px solid rgba(240,180,41,.2);}
+.b-red{background:rgba(255,68,85,.1);color:var(--red);border:1px solid rgba(255,68,85,.2);}
+.b-blue{background:rgba(79,142,247,.1);color:var(--blue);border:1px solid rgba(79,142,247,.2);}
+.b-purple{background:rgba(167,139,250,.1);color:var(--purple);border:1px solid rgba(167,139,250,.2);}
+
+/* ── VAGAS MAP ── */
+.vagas-wrap{padding:1.25rem;}
+.vagas-legend{display:flex;gap:1.5rem;margin-bottom:1rem;font-size:.75rem;color:var(--text2);}
+.vagas-legend span{display:flex;align-items:center;gap:5px;}
+.leg-dot{width:10px;height:10px;border-radius:3px;}
+.vagas-grid{display:grid;grid-template-columns:repeat(20,1fr);gap:4px;}
+.vaga{
+  aspect-ratio:1;border-radius:4px;border:1px solid transparent;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.5rem;font-family:'Syne',sans-serif;font-weight:700;
+  cursor:default;transition:all .2s;
+}
+.vaga.livre{background:rgba(31,204,144,.08);border-color:rgba(31,204,144,.2);color:var(--green);}
+.vaga.ocupada{background:rgba(255,68,85,.08);border-color:rgba(255,68,85,.2);color:var(--red);}
+.vaga:hover.ocupada{transform:scale(1.3);z-index:2;background:rgba(255,68,85,.2);}
+
+/* ── MENSALISTA CARD ── */
+.mens-card{
+  background:var(--surface2);border:1px solid var(--border);border-radius:12px;
+  padding:.9rem 1rem;display:flex;align-items:center;gap:.9rem;
+  transition:border-color .15s;margin-bottom:.6rem;
+}
+.mens-card:hover{border-color:var(--border2);}
+.mens-av{
+  width:40px;height:40px;flex-shrink:0;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem;color:#000;
+}
+.mens-info{flex:1;min-width:0;}
+.mens-name{font-weight:500;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mens-plate{font-family:'Syne',sans-serif;font-size:.75rem;color:var(--text2);letter-spacing:2px;margin-top:1px;}
+.mens-actions{display:flex;gap:.4rem;flex-shrink:0;}
+
+/* ── MODAL ── */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);
+  z-index:200;display:none;align-items:center;justify-content:center;padding:1rem;
+}
+.overlay.open{display:flex;}
+.modal{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:1.75rem;width:100%;max-width:460px;
+  animation:modalIn .22s ease;max-height:90vh;overflow-y:auto;
+}
+@keyframes modalIn{from{transform:scale(.94);opacity:0;}to{transform:scale(1);opacity:1;}}
+.modal-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem;}
+.receipt{background:var(--surface2);border-radius:12px;padding:1.1rem;margin-bottom:1.25rem;}
+.r-row{display:flex;justify-content:space-between;padding:.35rem 0;font-size:.85rem;}
+.r-row .r-lbl{color:var(--text2);}
+.r-total{border-top:1px solid var(--border);margin-top:.5rem;padding-top:.65rem;}
+.r-total .r-val{font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;color:var(--accent);}
+.modal-btns{display:flex;gap:.6rem;}
+.modal-btns .btn{flex:1;}
+
+/* ── CHART ── */
+.chart-bars{display:flex;align-items:flex-end;gap:3px;height:70px;margin:1rem 0 .4rem;}
+.bar{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(to top,rgba(240,180,41,.7),rgba(240,180,41,.25));min-height:3px;transition:height .5s ease;}
+.bar:hover{background:linear-gradient(to top,var(--accent),rgba(240,180,41,.4));}
+.chart-lbls{display:flex;gap:3px;}
+.chart-lbl{flex:1;font-size:.55rem;color:var(--text3);text-align:center;}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:300;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:.85rem 1.25rem;display:flex;align-items:center;gap:.65rem;
+  transform:translateY(80px);opacity:0;transition:all .25s;
+  font-size:.85rem;box-shadow:var(--shadow);pointer-events:none;
+}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* ── SEARCH ── */
+.search-bar{display:flex;gap:.65rem;margin-bottom:1rem;}
+.search-bar input{flex:1;}
+.search-bar select{width:130px;flex-shrink:0;}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--text3);}
+.empty-ico{font-size:2.5rem;margin-bottom:.75rem;opacity:.3;}
+
+/* ── FINANCEIRO ── */
+.fin-row{display:flex;justify-content:space-between;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--border);font-size:.85rem;}
+.fin-row:last-child{border-bottom:none;}
+.fin-lbl{color:var(--text2);}
+.fin-val{font-family:'Syne',sans-serif;font-weight:700;}
+
+/* ── PRECOS GRID ── */
+.price-grid{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:1.1rem;}
+.price-tile{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:.9rem;text-align:center;}
+.p-tipo{font-size:.67rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:.2rem;}
+.p-val{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;color:var(--accent);}
+.p-unit{font-size:.67rem;color:var(--text3);}
+
+/* ── ALERT VENCENDO ── */
+.alert-vencendo{
+  background:rgba(240,180,41,.06);border:1px solid rgba(240,180,41,.2);
+  border-radius:12px;padding:.9rem 1rem;margin-bottom:1rem;
+}
+.alert-title{font-size:.75rem;color:var(--accent);font-weight:600;margin-bottom:.5rem;display:flex;align-items:center;gap:6px;}
+.alert-item{font-size:.78rem;color:var(--text2);padding:.2rem 0;}
+
+/* ── RESPONSIVO ── */
+@media(max-width:1200px){.main-grid{grid-template-columns:340px 1fr;}}
+@media(max-width:960px){
+  .main-grid{grid-template-columns:1fr;}
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+  .vagas-grid{grid-template-columns:repeat(15,1fr);}
+  .header-center .nav-btn span:not(.ico-nav){display:none;}
+}
+@media(max-width:600px){
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .vagas-grid{grid-template-columns:repeat(10,1fr);}
+  header{padding:0 .75rem;}
+  .page{padding:1rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="login-page">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="ico">🅿️</div>
+      <h1>Park<span>Pro</span></h1>
+      <p>Sistema de Estacionamento</p>
+    </div>
+    <div class="login-err" id="login-err"></div>
+    <div class="fg"><label>E-mail</label><input id="l-email" type="email" placeholder="admin@parkpro.com" autocomplete="username"></div>
+    <div class="fg"><label>Senha</label><input id="l-senha" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="btn btn-acc" onclick="doLogin()" style="margin-top:.25rem;">Entrar no Sistema</button>
+    <p style="text-align:center;font-size:.72rem;color:var(--text3);margin-top:1rem;">ParkPro v1.0 · Uberaba/MG</p>
+  </div>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="app">
+  <header>
+    <div class="logo"><div class="logo-box">🅿️</div>Park<span>Pro</span></div>
+    <div class="header-center">
+      <button class="nav-btn active" data-page="dashboard" onclick="goPage('dashboard',this)"><span class="ico-nav">📊</span> <span>Dashboard</span></button>
+      <button class="nav-btn" data-page="entrada" onclick="goPage('entrada',this)"><span class="ico-nav">🚗</span> <span>Entrada/Saída</span></button>
+      <button class="nav-btn" data-page="mensalistas" onclick="goPage('mensalistas',this)"><span class="ico-nav">📅</span> <span>Mensalistas</span></button>
+      <button class="nav-btn" data-page="relatorio" onclick="goPage('relatorio',this)"><span class="ico-nav">📈</span> <span>Relatórios</span></button>
+      <button class="nav-btn" data-page="vagas" onclick="goPage('vagas',this)"><span class="ico-nav">🅿️</span> <span>Vagas</span></button>
+    </div>
+    <div class="header-right">
+      <div class="live-pill"><div class="dot"></div>AO VIVO</div>
+      <div id="clock"></div>
+      <div class="user-pill" onclick="logout()">
+        <div class="user-avatar" id="user-av">A</div>
+        <span id="user-name">Admin</span>
+        <span style="color:var(--text3);font-size:.7rem;margin-left:2px;">✕</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="content-area">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat" style="--c:var(--green)"><div class="stat-ico">🚗</div><div class="stat-label">Dentro Agora</div><div class="stat-val" id="s-dentro">–</div><div class="stat-sub" id="s-vagas-sub">carregando...</div></div>
+        <div class="stat" style="--c:var(--accent)"><div class="stat-ico">💰</div><div class="stat-label">Faturamento Hoje</div><div class="stat-val" id="s-hoje">–</div><div class="stat-sub" id="s-hoje-sub">0 movimentos</div></div>
+        <div class="stat" style="--c:var(--blue)"><div class="stat-ico">📅</div><div class="stat-label">Mensalistas Ativos</div><div class="stat-val" id="s-mens">–</div><div class="stat-sub">contratos vigentes</div></div>
+        <div class="stat" style="--c:var(--accent2,#f97316)"><div class="stat-ico">📈</div><div class="stat-label">Faturamento do Mês</div><div class="stat-val" id="s-mes">–</div><div class="stat-sub">mês atual</div></div>
+      </div>
+
+      <div class="main-grid">
+        <div class="side-stack">
+          <!-- veículos dentro -->
+          <div class="card">
+            <div class="card-head"><div class="card-title">🚗 Pátio Agora</div><button class="btn btn-ghost btn-sm" onclick="loadDentro()">↻ Atualizar</button></div>
+            <div style="max-height:300px;overflow-y:auto;">
+              <div class="tbl-wrap"><table><thead><tr><th>Placa</th><th>Tipo</th><th>Vaga</th><th>Tempo</th></tr></thead><tbody id="tb-dentro"><tr><td colspan="4"><div class="empty"><div class="empty-ico">🅿️</div>Carregando...</div></td></tr></tbody></table></div>
+            </div>
+          </div>
+          <!-- alertas vencendo -->
+          <div class="card" id="card-vencendo" style="display:none;">
+            <div class="card-head"><div class="card-title" style="color:var(--accent);">⚠️ Mensalistas Vencendo</div></div>
+            <div class="card-body" id="lista-vencendo"></div>
+          </div>
+          <!-- preços -->
+          <div class="card">
+            <div class="card-head"><div class="card-title">💲 Tabela de Preços</div><button class="btn btn-ghost btn-sm" onclick="openPrecos()">⚙️ Editar</button></div>
+            <div class="card-body">
+              <div class="price-grid">
+                <div class="price-tile"><div class="p-tipo">🚗 Carro</div><div class="p-val" id="pc-carro">–</div><div class="p-unit">/hora</div></div>
+                <div class="price-tile"><div class="p-tipo">🏍️ Moto</div><div class="p-val" id="pc-moto">–</div><div class="p-unit">/hora</div></div>
+                <div class="price-tile"><div class="p-tipo">🛻 Caminhonete</div><div class="p-val" id="pc-cam">–</div><div class="p-unit">/hora</div></div>
+                <div class="price-tile"><div class="p-tipo">📅 Mensalidade</div><div class="p-val" id="pc-mens">–</div><div class="p-unit">/mês</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- chart -->
+        <div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">📊 Faturamento — Últimos 14 dias</div></div>
+            <div class="card-body">
+              <div class="chart-bars" id="chart-bars"></div>
+              <div class="chart-lbls" id="chart-lbls"></div>
+            </div>
+          </div>
+          <div style="margin-top:1.25rem;" class="card">
+            <div class="card-head"><div class="card-title">🕐 Últimas Movimentações</div></div>
+            <div class="tbl-wrap" style="max-height:350px;overflow-y:auto;">
+              <table><thead><tr><th>Placa</th><th>Tipo</th><th>Entrada</th><th>Saída</th><th>Status</th><th>Valor</th></tr></thead><tbody id="tb-ultimos"></tbody></table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ENTRADA/SAÍDA ══ -->
+    <div class="page" id="page-entrada">
+      <div class="main-grid">
+        <div>
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title">🚗 Registrar Veículo</div>
+              <div class="tabs"><button class="tab active" onclick="setTab('entrada',this)">⬇️ Entrada</button><button class="tab" onclick="setTab('saida',this)">⬆️ Saída</button></div>
+            </div>
+            <div class="card-body">
+              <div id="t-entrada">
+                <div class="fg"><label>Placa</label><input id="e-placa" class="plate" type="text" placeholder="AAA0A00" maxlength="8"></div>
+                <div class="fg"><label>Tipo de Veículo</label><select id="e-tipo"><option value="Carro">🚗 Carro</option><option value="Moto">🏍️ Moto</option><option value="Caminhonete">🛻 Caminhonete / SUV</option></select></div>
+                <div class="fg"><label>Observação (opcional)</label><input id="e-obs" type="text" placeholder="Cor, modelo..."></div>
+                <button class="btn btn-acc" onclick="entrar()">⬇️ Registrar Entrada</button>
+              </div>
+              <div id="t-saida" style="display:none;">
+                <div class="fg"><label>Placa para Saída</label><input id="s-placa" class="plate" type="text" placeholder="AAA0A00" maxlength="8" oninput="previewSaida()"></div>
+                <div class="preview-box" id="preview-box"><span style="color:var(--text3);font-size:.82rem;">Digite a placa para ver detalhes</span></div>
+                <div class="fg"><label>Forma de Pagamento</label><select id="s-pgto"><option value="dinheiro">💵 Dinheiro</option><option value="pix">⚡ PIX</option><option value="cartao_debito">💳 Cartão Débito</option><option value="cartao_credito">💳 Cartão Crédito</option></select></div>
+                <button class="btn btn-danger" onclick="sair()">⬆️ Registrar Saída e Cobrar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">🅿️ Veículos no Pátio</div><button class="btn btn-ghost btn-sm" onclick="loadDentro2()">↻ Atualizar</button></div>
+          <div class="search-bar" style="padding:1rem 1.25rem 0;">
+            <input id="busca-dentro" type="text" placeholder="Buscar placa..." oninput="filtrarDentro()">
+          </div>
+          <div class="tbl-wrap" style="max-height:calc(100vh - 220px);overflow-y:auto;">
+            <table><thead><tr><th>Placa</th><th>Tipo</th><th>Vaga</th><th>Entrada</th><th>Tempo</th><th>Cliente</th><th>Ação</th></tr></thead>
+            <tbody id="tb-patio"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MENSALISTAS ══ -->
+    <div class="page" id="page-mensalistas">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;">📅 Mensalistas</div>
+        <button class="btn btn-acc btn-sm" onclick="openNovoMens()">＋ Novo Mensalista</button>
+      </div>
+      <div class="search-bar">
+        <input id="busca-mens" type="text" placeholder="Buscar nome ou placa..." oninput="loadMensalistas()">
+        <select id="filtro-mens" onchange="loadMensalistas()"><option value="">Todos</option><option value="true">Ativos</option><option value="false">Inativos</option></select>
+      </div>
+      <div id="lista-mensalistas"><div class="empty"><div class="empty-ico">📅</div>Carregando...</div></div>
+    </div>
+
+    <!-- ══ RELATÓRIOS ══ -->
+    <div class="page" id="page-relatorio">
+      <div class="main-grid" style="grid-template-columns:260px 1fr;">
+        <div class="side-stack">
+          <div class="card">
+            <div class="card-head"><div class="card-title">🔍 Filtros</div></div>
+            <div class="card-body">
+              <div class="fg"><label>Data Início</label><input id="r-inicio" type="date"></div>
+              <div class="fg"><label>Data Fim</label><input id="r-fim" type="date"></div>
+              <button class="btn btn-acc" onclick="loadRelatorio()">Gerar Relatório</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">💰 Resumo</div></div>
+            <div class="card-body" id="resumo-fin">
+              <div class="fin-row"><span class="fin-lbl">Total</span><span class="fin-val" id="r-total">–</span></div>
+              <div class="fin-row"><span class="fin-lbl">Avulso</span><span class="fin-val" id="r-avulso">–</span></div>
+              <div class="fin-row"><span class="fin-lbl">Mensalidades</span><span class="fin-val" id="r-mensalidade">–</span></div>
+              <div class="fin-row"><span class="fin-lbl">Transações</span><span class="fin-val" id="r-qtd">–</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">📋 Movimentações do Período</div></div>
+          <div class="tbl-wrap" style="max-height:calc(100vh - 200px);overflow-y:auto;">
+            <table><thead><tr><th>Data/Hora</th><th>Placa</th><th>Tipo</th><th>Cliente</th><th>Tempo</th><th>Forma Pgto</th><th>Valor</th></tr></thead>
+            <tbody id="tb-relatorio"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ VAGAS ══ -->
+    <div class="page" id="page-vagas">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">🅿️ Mapa de Vagas — Tempo Real</div>
+          <div style="display:flex;align-items:center;gap:1rem;">
+            <span style="font-size:.78rem;color:var(--text2);" id="vagas-info">–</span>
+            <button class="btn btn-ghost btn-sm" onclick="loadVagas()">↻ Atualizar</button>
+          </div>
+        </div>
+        <div class="vagas-wrap">
+          <div class="vagas-legend">
+            <span><div class="leg-dot" style="background:rgba(31,204,144,.4);border:1px solid rgba(31,204,144,.4);"></div>Livre</span>
+            <span><div class="leg-dot" style="background:rgba(255,68,85,.4);border:1px solid rgba(255,68,85,.4);"></div>Ocupada</span>
+          </div>
+          <div class="vagas-grid" id="vagas-grid"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- content-area -->
+</div><!-- app -->
+
+<!-- ══ MODAL SAÍDA CONFIRMAÇÃO ══ -->
+<div class="overlay" id="modal-saida">
+  <div class="modal">
+    <div class="modal-title">⬆️ Confirmar Saída</div>
+    <div class="receipt" id="modal-receipt"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-saida')">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmarSaida()">Confirmar e Cobrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL MENSALISTA ══ -->
+<div class="overlay" id="modal-mens">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-title" id="mens-modal-title">➕ Novo Mensalista</div>
+    <input type="hidden" id="mens-id">
+    <div class="row2">
+      <div class="fg"><label>Nome Completo *</label><input id="m-nome" type="text" placeholder="João da Silva"></div>
+      <div class="fg"><label>CPF</label><input id="m-cpf" type="text" placeholder="000.000.000-00"></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Telefone</label><input id="m-tel" type="text" placeholder="(34) 9 9999-9999"></div>
+      <div class="fg"><label>E-mail</label><input id="m-email" type="email" placeholder="joao@email.com"></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Placa *</label><input id="m-placa" class="plate" type="text" placeholder="AAA0A00" maxlength="8"></div>
+      <div class="fg"><label>Tipo de Veículo</label><select id="m-tipo"><option value="Carro">🚗 Carro</option><option value="Moto">🏍️ Moto</option><option value="Caminhonete">🛻 Caminhonete</option></select></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Vencimento *</label><input id="m-venc" type="date"></div>
+      <div class="fg"><label>Valor Mensal *</label><input id="m-valor" type="number" step="0.01" placeholder="250.00"></div>
+    </div>
+    <div class="fg"><label>Vaga Fixa (opcional)</label><input id="m-vaga" type="number" placeholder="ex: 15"></div>
+    <div class="fg"><label>Observação</label><textarea id="m-obs" rows="2" placeholder="Observações..."></textarea></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-mens')">Cancelar</button>
+      <button class="btn btn-acc" onclick="salvarMens()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL RENOVAR ══ -->
+<div class="overlay" id="modal-renovar">
+  <div class="modal">
+    <div class="modal-title">🔄 Renovar Mensalidade</div>
+    <input type="hidden" id="ren-id">
+    <div class="receipt" id="ren-info"></div>
+    <div class="row2">
+      <div class="fg"><label>Meses</label><select id="ren-meses"><option value="1">1 mês</option><option value="2">2 meses</option><option value="3">3 meses</option><option value="6">6 meses</option><option value="12">12 meses</option></select></div>
+      <div class="fg"><label>Forma de Pag.</label><select id="ren-pgto"><option value="dinheiro">💵 Dinheiro</option><option value="pix">⚡ PIX</option><option value="cartao_debito">💳 Débito</option><option value="cartao_credito">💳 Crédito</option></select></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-renovar')">Cancelar</button>
+      <button class="btn btn-green" onclick="confirmarRenovar()">✅ Confirmar Renovação</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL PREÇOS ══ -->
+<div class="overlay" id="modal-precos">
+  <div class="modal">
+    <div class="modal-title">⚙️ Configurar Preços</div>
+    <div class="row2">
+      <div class="fg"><label>🚗 Carro (R$/h)</label><input id="p-carro" type="number" step="0.01"></div>
+      <div class="fg"><label>🏍️ Moto (R$/h)</label><input id="p-moto" type="number" step="0.01"></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>🛻 Caminhonete (R$/h)</label><input id="p-cam" type="number" step="0.01"></div>
+      <div class="fg"><label>📅 Mensalidade (R$/mês)</label><input id="p-mensalidade" type="number" step="0.01"></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Total de Vagas</label><input id="p-vagas" type="number"></div>
+      <div class="fg"><label>Tolerância (min)</label><input id="p-tolerancia" type="number"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-precos')">Cancelar</button>
+      <button class="btn btn-acc" onclick="salvarPrecos()">💾 Salvar Configurações</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toast-ico">✅</span><span id="toast-msg"></span></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════
+const API = window.location.origin + '/api';
+let TOKEN = localStorage.getItem('pp_token');
+let USER = JSON.parse(localStorage.getItem('pp_user') || 'null');
+let saidaData = null;
+let dentroCache = [];
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  clockTick();
+  setInterval(clockTick, 1000);
+  if (TOKEN && USER) showApp();
+  else showLogin();
+
+  // Datas padrão relatório
+  const hoje = new Date().toISOString().split('T')[0];
+  const inicio = new Date(new Date().setDate(1)).toISOString().split('T')[0];
+  document.getElementById('r-inicio').value = inicio;
+  document.getElementById('r-fim').value = hoje;
+
+  document.getElementById('l-senha').addEventListener('keypress', e => { if(e.key==='Enter') doLogin(); });
+});
+
+function clockTick() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleString('pt-BR', {weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+}
+
+function showLogin() { document.getElementById('login-page').style.display='flex'; document.getElementById('app').classList.remove('visible'); }
+function showApp() {
+  document.getElementById('login-page').style.display='none';
+  document.getElementById('app').classList.add('visible');
+  if (USER) {
+    document.getElementById('user-name').textContent = USER.nome?.split(' ')[0] || 'Usuário';
+    document.getElementById('user-av').textContent = (USER.nome||'U')[0].toUpperCase();
+  }
+  loadDashboard();
+  loadDentro();
+  setInterval(loadDashboard, 30000);
+  setInterval(() => { if(document.getElementById('page-entrada').classList.contains('active')) loadDentro2(); }, 20000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('l-email').value.trim();
+  const senha = document.getElementById('l-senha').value;
+  const err = document.getElementById('login-err');
+  err.style.display='none';
+  try {
+    const r = await fetch(`${API}/auth/login`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,senha})});
+    const d = await r.json();
+    if (!r.ok) { err.textContent = d.error || 'Erro ao entrar'; err.style.display='block'; return; }
+    TOKEN = d.token; USER = d.usuario;
+    localStorage.setItem('pp_token', TOKEN);
+    localStorage.setItem('pp_user', JSON.stringify(USER));
+    showApp();
+  } catch(e) { err.textContent='Servidor indisponível. Verifique a conexão.'; err.style.display='block'; }
+}
+function logout() { localStorage.removeItem('pp_token'); localStorage.removeItem('pp_user'); TOKEN=null; USER=null; showLogin(); }
+
+async function apiFetch(path, opts={}) {
+  const res = await fetch(`${API}${path}`, {
+    ...opts,
+    headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${TOKEN}`, ...(opts.headers||{}) }
+  });
+  if (res.status === 401 || res.status === 403) { logout(); return null; }
+  return res;
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVEGAÇÃO
+// ═══════════════════════════════════════════════════════════
+function goPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='mensalistas') loadMensalistas();
+  if(name==='relatorio') loadRelatorio();
+  if(name==='vagas') loadVagas();
+  if(name==='entrada') loadDentro2();
+}
+
+function setTab(t, btn) {
+  document.querySelectorAll('#page-entrada .tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('t-entrada').style.display = t==='entrada' ? 'block' : 'none';
+  document.getElementById('t-saida').style.display = t==='saida' ? 'block' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════
+async function loadDashboard() {
+  const r = await apiFetch('/relatorios/dashboard');
+  if(!r) return;
+  const d = await r.json();
+
+  document.getElementById('s-dentro').textContent = d.dentro_agora;
+  document.getElementById('s-vagas-sub').textContent = `${d.vagas_livres} vagas livres de ${d.total_vagas}`;
+  document.getElementById('s-hoje').textContent = 'R$ ' + d.faturamento_hoje.toLocaleString('pt-BR',{minimumFractionDigits:2});
+  document.getElementById('s-hoje-sub').textContent = `${d.entradas_hoje} entradas hoje`;
+  document.getElementById('s-mens').textContent = d.mensalistas_ativos;
+  document.getElementById('s-mes').textContent = 'R$ ' + d.faturamento_mes.toLocaleString('pt-BR',{minimumFractionDigits:2});
+
+  if(d.mensalistas_vencendo?.length) {
+    document.getElementById('card-vencendo').style.display='block';
+    document.getElementById('lista-vencendo').innerHTML = d.mensalistas_vencendo.map(m=>
+      `<div class="alert-item">⚠️ <strong>${m.nome}</strong> (${m.placa}) — vence ${fmtDate(m.vencimento)}</div>`
+    ).join('');
+  }
+
+  loadPrecos();
+  loadDentro();
+  loadChart();
+  loadUltimos();
+}
+
+async function loadPrecos() {
+  const r = await apiFetch('/relatorios/configuracoes');
+  if(!r) return;
+  const d = await r.json();
+  const fmt = v => 'R$ ' + parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2});
+  document.getElementById('pc-carro').textContent = fmt(d.preco_carro);
+  document.getElementById('pc-moto').textContent = fmt(d.preco_moto);
+  document.getElementById('pc-cam').textContent = fmt(d.preco_caminhonete);
+  document.getElementById('pc-mens').textContent = fmt(d.preco_mensalidade);
+}
+
+async function loadChart() {
+  const dias = 14;
+  const arr = [];
+  for(let i=dias-1;i>=0;i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    arr.push({ label: d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}), data: d.toISOString().split('T')[0] });
+  }
+  const ini = arr[0].data, fim = arr[arr.length-1].data;
+  const r = await apiFetch(`/relatorios/financeiro?inicio=${ini}&fim=${fim}`);
+  if(!r) return;
+  const d = await r.json();
+  const porDia = {};
+  (d.por_dia||[]).forEach(x => { porDia[x.data] = x.total; });
+  const vals = arr.map(a => porDia[a.data] || 0);
+  const max = Math.max(...vals, 1);
+  document.getElementById('chart-bars').innerHTML = vals.map(v => `<div class="bar" style="height:${Math.max(3,(v/max)*100)}%" title="R$ ${v.toFixed(2)}"></div>`).join('');
+  document.getElementById('chart-lbls').innerHTML = arr.map(a => `<div class="chart-lbl">${a.label}</div>`).join('');
+}
+
+async function loadUltimos() {
+  const r = await apiFetch('/movimentacoes?limit=20');
+  if(!r) return;
+  const d = await r.json();
+  const tb = document.getElementById('tb-ultimos');
+  if(!d.data?.length) { tb.innerHTML='<tr><td colspan="6"><div class="empty"><div class="empty-ico">📋</div>Sem movimentações</div></td></tr>'; return; }
+  tb.innerHTML = d.data.map(m => `
+    <tr>
+      <td><span class="plate-badge">${m.placa}</span></td>
+      <td><span class="badge ${tipoClass(m.tipo_veiculo)}">${m.tipo_veiculo}</span></td>
+      <td style="color:var(--text2)">${fmtDT(m.entrada_em)}</td>
+      <td style="color:var(--text2)">${m.saida_em ? fmtDT(m.saida_em) : '–'}</td>
+      <td>${m.status==='dentro' ? '<span class="badge b-green">● Dentro</span>' : '<span class="badge b-gray">Saiu</span>'}</td>
+      <td style="font-family:Syne,sans-serif;font-weight:700;">${m.valor_cobrado != null ? 'R$ '+parseFloat(m.valor_cobrado).toFixed(2) : '–'}</td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// ENTRADA / SAÍDA
+// ═══════════════════════════════════════════════════════════
+async function entrar() {
+  const placa = document.getElementById('e-placa').value.trim();
+  const tipo = document.getElementById('e-tipo').value;
+  const obs = document.getElementById('e-obs').value;
+  if(!placa) { toast('⚠️','Informe a placa'); return; }
+  const r = await apiFetch('/movimentacoes/entrada', {method:'POST',body:JSON.stringify({placa,tipo_veiculo:tipo,observacao:obs})});
+  if(!r) return;
+  const d = await r.json();
+  if(!r.ok) { toast('❌', d.error); return; }
+  toast('✅', `Entrada registrada! Vaga ${d.vaga || d.vaga_numero}`);
+  document.getElementById('e-placa').value='';
+  document.getElementById('e-obs').value='';
+  loadDentro2();
+  loadDashboard();
+}
+
+let previewTimer;
+function previewSaida() {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(async () => {
+    const placa = document.getElementById('s-placa').value.trim();
+    if(placa.length < 7) { document.getElementById('preview-box').innerHTML='<span style="color:var(--text3);font-size:.82rem;">Digite a placa para ver detalhes</span>'; return; }
+    const r = await apiFetch(`/movimentacoes/preview/${placa.toUpperCase()}`);
+    if(!r || !r.ok) { document.getElementById('preview-box').innerHTML='<span style="color:var(--red);font-size:.82rem;">Veículo não encontrado no pátio</span>'; return; }
+    const d = await r.json();
+    const h = Math.floor(d.minutos_atual/60), m = d.minutos_atual%60;
+    document.getElementById('preview-box').classList.add('loaded');
+    document.getElementById('preview-box').innerHTML = `
+      <div class="r-row"><span class="r-lbl">Placa</span><span class="plate-badge">${d.placa}</span></div>
+      <div class="r-row"><span class="r-lbl">Tipo</span><span>${d.tipo_veiculo}</span></div>
+      <div class="r-row"><span class="r-lbl">Entrada</span><span>${fmtDT(d.entrada_em)}</span></div>
+      <div class="r-row"><span class="r-lbl">Tempo</span><span>${h}h ${m}min</span></div>
+      <div class="r-row"><span class="r-lbl">Cliente</span><span>${d.tipo_cliente==='mensalista'?'<span class="badge b-yellow">Mensalista</span>':'<span class="badge b-blue">Avulso</span>'}</span></div>
+      <div class="r-row r-total"><span class="r-lbl">Valor</span><span class="r-val" style="font-family:Syne,sans-serif;font-weight:800;font-size:1.1rem;color:var(--accent);">
+        ${d.tipo_cliente==='mensalista' ? '<span style="color:var(--green)">Grátis ✓</span>' : 'R$ '+parseFloat(d.valor_estimado).toFixed(2)}
+      </span></div>`;
+  }, 400);
+}
+
+async function sair() {
+  const placa = document.getElementById('s-placa').value.trim();
+  if(!placa) { toast('⚠️','Informe a placa'); return; }
+  const r = await apiFetch(`/movimentacoes/preview/${placa.toUpperCase()}`);
+  if(!r||!r.ok) { toast('❌','Veículo não encontrado no pátio'); return; }
+  const d = await r.json();
+  const h = Math.floor(d.minutos_atual/60), m = d.minutos_atual%60;
+  saidaData = { placa, forma_pagamento: document.getElementById('s-pgto').value };
+  const rec = document.getElementById('modal-receipt');
+  rec.innerHTML = `
+    <div class="r-row"><span class="r-lbl">Placa</span><span class="plate-badge">${d.placa}</span></div>
+    <div class="r-row"><span class="r-lbl">Tipo</span><span>${d.tipo_veiculo}</span></div>
+    <div class="r-row"><span class="r-lbl">Entrada</span><span>${fmtDT(d.entrada_em)}</span></div>
+    <div class="r-row"><span class="r-lbl">Permanência</span><span>${h}h ${m}min</span></div>
+    <div class="r-row r-total"><span class="r-lbl">Cobrar</span><span class="r-val">
+      ${d.tipo_cliente==='mensalista' ? '<span style="color:var(--green)">Mensalista — Grátis</span>' : 'R$ '+parseFloat(d.valor_estimado).toFixed(2)}
+    </span></div>`;
+  openModal('modal-saida');
+}
+
+async function confirmarSaida() {
+  closeModal('modal-saida');
+  const r = await apiFetch('/movimentacoes/saida', {method:'POST',body:JSON.stringify(saidaData)});
+  if(!r) return;
+  const d = await r.json();
+  if(!r.ok) { toast('❌', d.error); return; }
+  const val = d.mensalista ? 'Mensalista — sem cobrança' : 'R$ '+parseFloat(d.valor_cobrado).toFixed(2);
+  toast('✅', `Saída registrada! ${val}`);
+  document.getElementById('s-placa').value='';
+  document.getElementById('preview-box').innerHTML='<span style="color:var(--text3);font-size:.82rem;">Digite a placa para ver detalhes</span>';
+  loadDentro2(); loadDashboard();
+}
+
+async function loadDentro() {
+  const r = await apiFetch('/movimentacoes/dentro');
+  if(!r) return;
+  dentroCache = await r.json();
+  renderDentro();
+}
+async function loadDentro2() { await loadDentro(); renderDentro2(); }
+
+function renderDentro() {
+  const tb = document.getElementById('tb-dentro');
+  if(!dentroCache.length) { tb.innerHTML='<tr><td colspan="4"><div class="empty" style="padding:1.5rem"><div class="empty-ico">🚗</div>Pátio vazio</div></td></tr>'; return; }
+  tb.innerHTML = dentroCache.slice(0,8).map(m => {
+    const mins = Math.floor((Date.now() - new Date(m.entrada_em))/60000);
+    const h = Math.floor(mins/60), min = mins%60;
+    return `<tr><td><span class="plate-badge">${m.placa}</span></td><td><span class="badge ${tipoClass(m.tipo_veiculo)}" style="font-size:.67rem">${m.tipo_veiculo}</span></td><td style="color:var(--text2)">${m.vaga_numero||'–'}</td><td style="color:var(--text2)">${h}h${min}m</td></tr>`;
+  }).join('');
+}
+
+function renderDentro2() {
+  const busca = (document.getElementById('busca-dentro')?.value||'').toLowerCase();
+  const lista = busca ? dentroCache.filter(m=>m.placa.toLowerCase().includes(busca)) : dentroCache;
+  const tb = document.getElementById('tb-patio');
+  if(!lista.length) { tb.innerHTML='<tr><td colspan="7"><div class="empty"><div class="empty-ico">🅿️</div>Nenhum veículo encontrado</div></td></tr>'; return; }
+  tb.innerHTML = lista.map(m => {
+    const mins = Math.floor((Date.now()-new Date(m.entrada_em))/60000);
+    const h=Math.floor(mins/60), min=mins%60;
+    return `<tr>
+      <td><span class="plate-badge">${m.placa}</span></td>
+      <td><span class="badge ${tipoClass(m.tipo_veiculo)}">${m.tipo_veiculo}</span></td>
+      <td style="font-family:Syne,sans-serif;font-weight:700;">${m.vaga_numero||'–'}</td>
+      <td style="color:var(--text2)">${fmtDT(m.entrada_em)}</td>
+      <td style="color:var(--text2)">${h}h ${min}min</td>
+      <td>${m.tipo_cliente==='mensalista'?'<span class="badge b-yellow">Mensalista</span>':'<span class="badge b-blue">Avulso</span>'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="saidaRapida('${m.placa}')">Saída</button></td>
+    </tr>`;
+  }).join('');
+}
+function filtrarDentro() { renderDentro2(); }
+
+async function saidaRapida(placa) {
+  document.getElementById('s-placa').value = placa;
+  setTab('saida', document.querySelectorAll('#page-entrada .tab')[1]);
+  previewSaida();
+}
+
+// ═══════════════════════════════════════════════════════════
+// MENSALISTAS
+// ═══════════════════════════════════════════════════════════
+async function loadMensalistas() {
+  const busca = document.getElementById('busca-mens').value;
+  const ativo = document.getElementById('filtro-mens').value;
+  let url = '/mensalistas?limit=100';
+  if(busca) url += `&busca=${encodeURIComponent(busca)}`;
+  if(ativo) url += `&ativo=${ativo}`;
+  const r = await apiFetch(url);
+  if(!r) return;
+  const d = await r.json();
+  const el = document.getElementById('lista-mensalistas');
+  if(!d.data?.length) { el.innerHTML='<div class="empty"><div class="empty-ico">📅</div>Nenhum mensalista encontrado</div>'; return; }
+  el.innerHTML = d.data.map(m => `
+    <div class="mens-card">
+      <div class="mens-av">${m.nome[0].toUpperCase()}</div>
+      <div class="mens-info">
+        <div class="mens-name">${m.nome}</div>
+        <div class="mens-plate">${m.placa}${m.telefone?' · '+m.telefone:''}</div>
+        <div style="font-size:.72rem;color:var(--text3);margin-top:2px;">Vence: ${fmtDate(m.vencimento)} ${m.vencido?'<span class="badge b-red" style="margin-left:4px">Vencido</span>':'<span class="badge b-green" style="margin-left:4px">Ativo</span>'}</div>
+      </div>
+      <div class="mens-actions">
+        <button class="btn btn-green btn-sm" onclick="openRenovar('${m.id}','${m.nome.replace(/'/g,"\\'")}',${m.valor_mensal})">Renovar</button>
+        <button class="btn btn-ghost btn-sm" onclick="editMens('${m.id}')">✏️</button>
+      </div>
+    </div>`).join('');
+}
+
+function openNovoMens() {
+  document.getElementById('mens-modal-title').textContent = '➕ Novo Mensalista';
+  document.getElementById('mens-id').value='';
+  ['m-nome','m-cpf','m-tel','m-email','m-placa','m-obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('m-valor').value='';
+  document.getElementById('m-vaga').value='';
+  const venc = new Date(); venc.setMonth(venc.getMonth()+1);
+  document.getElementById('m-venc').value = venc.toISOString().split('T')[0];
+  openModal('modal-mens');
+}
+
+async function editMens(id) {
+  const r = await apiFetch(`/mensalistas/${id}`);
+  if(!r||!r.ok) return;
+  const m = await r.json();
+  document.getElementById('mens-modal-title').textContent = '✏️ Editar Mensalista';
+  document.getElementById('mens-id').value=m.id;
+  document.getElementById('m-nome').value=m.nome||'';
+  document.getElementById('m-cpf').value=m.cpf||'';
+  document.getElementById('m-tel').value=m.telefone||'';
+  document.getElementById('m-email').value=m.email||'';
+  document.getElementById('m-placa').value=m.placa||'';
+  document.getElementById('m-tipo').value=m.tipo_veiculo||'Carro';
+  document.getElementById('m-venc').value=m.vencimento||'';
+  document.getElementById('m-valor').value=m.valor_mensal||'';
+  document.getElementById('m-vaga').value=m.vaga_fixa||'';
+  document.getElementById('m-obs').value=m.observacao||'';
+  openModal('modal-mens');
+}
+
+async function salvarMens() {
+  const id = document.getElementById('mens-id').value;
+  const body = {
+    nome:document.getElementById('m-nome').value,
+    cpf:document.getElementById('m-cpf').value,
+    telefone:document.getElementById('m-tel').value,
+    email:document.getElementById('m-email').value,
+    placa:document.getElementById('m-placa').value,
+    tipo_veiculo:document.getElementById('m-tipo').value,
+    vencimento:document.getElementById('m-venc').value,
+    valor_mensal:parseFloat(document.getElementById('m-valor').value),
+    vaga_fixa:document.getElementById('m-vaga').value||null,
+    observacao:document.getElementById('m-obs').value
+  };
+  if(!body.nome||!body.placa||!body.vencimento||!body.valor_mensal) { toast('⚠️','Preencha os campos obrigatórios'); return; }
+  const url = id ? `/mensalistas/${id}` : '/mensalistas';
+  const method = id ? 'PUT' : 'POST';
+  const r = await apiFetch(url, {method, body:JSON.stringify(body)});
+  if(!r) return;
+  const d = await r.json();
+  if(!r.ok) { toast('❌', d.error); return; }
+  toast('✅', id ? 'Mensalista atualizado!' : 'Mensalista cadastrado!');
+  closeModal('modal-mens');
+  loadMensalistas();
+}
+
+function openRenovar(id, nome, valor) {
+  document.getElementById('ren-id').value=id;
+  document.getElementById('ren-info').innerHTML=`
+    <div class="r-row"><span class="r-lbl">Mensalista</span><span>${nome}</span></div>
+    <div class="r-row"><span class="r-lbl">Valor/mês</span><span>R$ ${parseFloat(valor).toFixed(2)}</span></div>`;
+  openModal('modal-renovar');
+}
+
+async function confirmarRenovar() {
+  const id = document.getElementById('ren-id').value;
+  const meses = document.getElementById('ren-meses').value;
+  const forma = document.getElementById('ren-pgto').value;
+  const r = await apiFetch(`/mensalistas/${id}/renovar`, {method:'POST',body:JSON.stringify({meses,forma_pagamento:forma})});
+  if(!r) return;
+  const d = await r.json();
+  if(!r.ok) { toast('❌', d.error); return; }
+  toast('✅', `Renovado até ${fmtDate(d.vencimento)} · R$ ${d.valor_pago?.toFixed(2)}`);
+  closeModal('modal-renovar');
+  loadMensalistas();
+}
+
+// ═══════════════════════════════════════════════════════════
+// RELATÓRIO
+// ═══════════════════════════════════════════════════════════
+async function loadRelatorio() {
+  const ini = document.getElementById('r-inicio').value;
+  const fim = document.getElementById('r-fim').value;
+  const r = await apiFetch(`/relatorios/financeiro?inicio=${ini}&fim=${fim}`);
+  if(!r) return;
+  const d = await r.json();
+  const fmt = v => 'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+  document.getElementById('r-total').textContent=fmt(d.resumo.total);
+  document.getElementById('r-avulso').textContent=fmt(d.resumo.avulso);
+  document.getElementById('r-mensalidade').textContent=fmt(d.resumo.mensalidade);
+  document.getElementById('r-qtd').textContent=d.resumo.quantidade;
+
+  const tb = document.getElementById('tb-relatorio');
+  if(!d.pagamentos?.length) { tb.innerHTML='<tr><td colspan="7"><div class="empty"><div class="empty-ico">📊</div>Sem movimentações no período</div></td></tr>'; return; }
+  tb.innerHTML = d.pagamentos.map(p => {
+    const mov = p.movimentacoes;
+    const mens = p.mensalistas;
+    return `<tr>
+      <td style="color:var(--text2)">${fmtDT(p.pago_em)}</td>
+      <td><span class="plate-badge">${mov?.placa||mens?.placa||'–'}</span></td>
+      <td>${mov?.tipo_veiculo||'–'}</td>
+      <td>${p.tipo==='mensalidade'?`<span class="badge b-yellow">Mensalidade</span>`:'<span class="badge b-blue">Avulso</span>'}</td>
+      <td style="color:var(--text2)">${mov?.tempo_minutos ? Math.floor(mov.tempo_minutos/60)+'h'+mov.tempo_minutos%60+'m' : '–'}</td>
+      <td>${p.forma_pagamento||'–'}</td>
+      <td style="font-family:Syne,sans-serif;font-weight:700;color:var(--accent);">R$ ${parseFloat(p.valor).toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// VAGAS
+// ═══════════════════════════════════════════════════════════
+async function loadVagas() {
+  const r = await apiFetch('/relatorios/vagas');
+  if(!r) return;
+  const d = await r.json();
+  document.getElementById('vagas-info').textContent = `${d.livres} livres · ${d.ocupadas} ocupadas · ${d.total} total`;
+  const grid = document.getElementById('vagas-grid');
+  grid.style.gridTemplateColumns = `repeat(${Math.min(20, Math.ceil(Math.sqrt(d.total*1.5)))},1fr)`;
+  grid.innerHTML = d.vagas.map(v => {
+    if(v.ocupada) {
+      const mins = Math.floor((Date.now()-new Date(v.dados.entrada_em))/60000);
+      return `<div class="vaga ocupada" title="Vaga ${v.numero}: ${v.dados.placa} (${mins}min)">${v.numero}</div>`;
+    }
+    return `<div class="vaga livre" title="Vaga ${v.numero}: Livre">${v.numero}</div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// PREÇOS
+// ═══════════════════════════════════════════════════════════
+async function openPrecos() {
+  const r = await apiFetch('/relatorios/configuracoes');
+  if(!r) return;
+  const d = await r.json();
+  document.getElementById('p-carro').value=d.preco_carro;
+  document.getElementById('p-moto').value=d.preco_moto;
+  document.getElementById('p-cam').value=d.preco_caminhonete;
+  document.getElementById('p-mensalidade').value=d.preco_mensalidade;
+  document.getElementById('p-vagas').value=d.total_vagas;
+  document.getElementById('p-tolerancia').value=d.tolerancia_minutos;
+  openModal('modal-precos');
+}
+
+async function salvarPrecos() {
+  const body = {
+    preco_carro: parseFloat(document.getElementById('p-carro').value),
+    preco_moto: parseFloat(document.getElementById('p-moto').value),
+    preco_caminhonete: parseFloat(document.getElementById('p-cam').value),
+    preco_mensalidade: parseFloat(document.getElementById('p-mensalidade').value),
+    total_vagas: parseInt(document.getElementById('p-vagas').value),
+    tolerancia_minutos: parseInt(document.getElementById('p-tolerancia').value)
+  };
+  const r = await apiFetch('/relatorios/configuracoes', {method:'PUT',body:JSON.stringify(body)});
+  if(!r||!r.ok) { toast('❌','Erro ao salvar'); return; }
+  toast('✅','Configurações salvas!');
+  closeModal('modal-precos');
+  loadPrecos();
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+let toastTimer;
+function toast(ico, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-ico').textContent=ico;
+  document.getElementById('toast-msg').textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+function fmtDate(d) {
+  if(!d) return '–';
+  const [y,m,day] = d.split('T')[0].split('-');
+  return `${day}/${m}/${y}`;
+}
+function fmtDT(d) {
+  if(!d) return '–';
+  const dt = new Date(d);
+  return dt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+function tipoClass(t) {
+  return t==='Moto'?'b-purple':t==='Caminhonete'?'b-red':'b-blue';
+}
+
+// Fechar modal clicando fora
+document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
+
+// Uppercase nas placas
+document.addEventListener('input', e => { if(e.target.classList.contains('plate')) e.target.value=e.target.value.toUpperCase(); });
+</script>
+</body>
+</html>
